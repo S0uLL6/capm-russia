@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAPM Russia — Plan</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0f1117;
+    color: #e2e8f0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    padding: 40px 24px;
+  }
+
+  .container { max-width: 860px; margin: 0 auto; }
+
+  /* ── Header ── */
+  .header { display: flex; align-items: center; gap: 16px; margin-bottom: 36px; }
+  .header-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; flex-shrink: 0;
+  }
+  .header-title { font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+  .header-sub { font-size: 14px; color: #64748b; margin-top: 4px; }
+
+  /* ── Progress block ── */
+  .progress-block {
+    background: #1e2130;
+    border-radius: 16px;
+    padding: 22px 26px;
+    margin-bottom: 28px;
+    border: 1px solid #2a2f45;
+  }
+  .progress-header { display: flex; justify-content: space-between; margin-bottom: 12px; }
+  .progress-label { font-size: 15px; color: #94a3b8; }
+  .progress-pct { font-size: 15px; font-weight: 700; color: #fff; }
+  .progress-bar-bg {
+    height: 8px; background: #2a2f45; border-radius: 99px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4f46e5, #818cf8);
+    border-radius: 99px;
+    transition: width 0.6s ease;
+  }
+  .progress-stats { display: flex; gap: 24px; margin-top: 14px; }
+  .stat { display: flex; align-items: center; gap: 7px; font-size: 14px; color: #94a3b8; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-done    { background: #22c55e; }
+  .dot-active  { background: #f59e0b; }
+  .dot-pending { background: #60a5fa; }
+
+  /* ── Legend ── */
+  .legend { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+  .badge {
+    padding: 7px 16px; border-radius: 99px; font-size: 13px; font-weight: 600;
+    border: 1.5px solid; cursor: default;
+  }
+  .badge-done    { color: #22c55e; border-color: #22c55e33; background: #22c55e0f; }
+  .badge-active  { color: #f59e0b; border-color: #f59e0b33; background: #f59e0b0f; }
+  .badge-pending { color: #60a5fa; border-color: #60a5fa33; background: #60a5fa0f; }
+  .badge-hint    { color: #a78bfa; border-color: #a78bfa33; background: #a78bfa0f; }
+
+  /* ── Task card ── */
+  .task-card {
+    border-radius: 16px;
+    margin-bottom: 16px;
+    border: 1.5px solid;
+    overflow: hidden;
+  }
+  .task-card.done    { border-color: #22c55e40; background: #0d2318; }
+  .task-card.active  { border-color: #f59e0b40; background: #1f1a0d; }
+  .task-card.pending { border-color: #2a2f45;   background: #161b2e; }
+
+  .task-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 22px; cursor: pointer; user-select: none;
+  }
+  .task-num {
+    width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 700;
+  }
+  .done    .task-num { background: #22c55e22; color: #22c55e; }
+  .active  .task-num { background: #f59e0b22; color: #f59e0b; }
+  .pending .task-num { background: #60a5fa15; color: #60a5fa; }
+
+  .task-title { font-size: 16px; font-weight: 600; color: #f1f5f9; flex: 1; }
+  .task-status {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.5px;
+    margin-right: 10px;
+  }
+  .done    .task-status { color: #22c55e; }
+  .active  .task-status { color: #f59e0b; }
+  .pending .task-status { color: #475569; }
+
+  .toggle-arrow { font-size: 12px; color: #475569; transition: transform 0.2s; }
+  .task-card.open .toggle-arrow { transform: rotate(0deg); }
+  .task-card:not(.open) .toggle-arrow { transform: rotate(-90deg); }
+
+  /* ── Subtasks ── */
+  .subtasks { padding: 0 16px 16px; display: none; flex-direction: column; gap: 8px; }
+  .task-card.open .subtasks { display: flex; }
+
+  .subtask {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 13px 16px; border-radius: 10px;
+    background: #0a0d1a; border: 1px solid #1e2340;
+  }
+  .sub-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .sub-text { flex: 1; font-size: 14px; color: #cbd5e1; line-height: 1.5; }
+  .sub-text code {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    background: #1e2340; padding: 1px 6px; border-radius: 4px; font-size: 12px;
+    color: #a5b4fc;
+  }
+  .sub-badge {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+    padding: 3px 9px; border-radius: 5px; flex-shrink: 0; margin-top: 2px;
+  }
+  .sub-done    { color: #22c55e; background: #22c55e15; }
+  .sub-active  { color: #f59e0b; background: #f59e0b15; }
+  .sub-pending { color: #475569; background: #1e2340; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-icon">📊</div>
+    <div>
+      <div class="header-title">CAPM — Russian Stock Market</div>
+      <div class="header-sub">Task Board — план исследовательского проекта</div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-block">
+    <div class="progress-header">
+      <span class="progress-label">Общий прогресс</span>
+      <span class="progress-pct">22%</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" style="width: 22%"></div>
+    </div>
+    <div class="progress-stats">
+      <div class="stat"><div class="dot dot-done"></div> 1 завершено</div>
+      <div class="stat"><div class="dot dot-active"></div> 1 в работе</div>
+      <div class="stat"><div class="dot dot-pending"></div> 4 ожидает</div>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="badge badge-done">✓ Завершено</div>
+    <div class="badge badge-active">⟳ В процессе</div>
+    <div class="badge badge-pending">○ Ожидает</div>
+    <div class="badge badge-hint">Нажми на задачу чтобы раскрыть подзадачи</div>
+  </div>
+
+  <!-- ── TASK 1 ── -->
+  <div class="task-card done open">
+    <div class="task-header" onclick="toggle(this)">
+      <div class="task-num">1</div>
+      <div class="task-title">Базовая модель CAPM</div>
+      <div class="task-status">ЗАВЕРШЕНО</div>
+      <div class="toggle-arrow">▲</div>
+    </div>
+    <div class="subtasks">
+      <div class="subtask">
+        <div class="sub-icon">✅</div>
+        <div class="sub-text"><b>1.1</b> — Загрузка данных: Yahoo Finance <code>.ME</code> тикеры, IMOEX, ОФЗ как безрисковая ставка</div>
+        <div class="sub-badge sub-done">DONE</div>
+      </div>
+      <div class="subtask">
+        <div class="sub-icon">✅</div>
+        <div class="sub-text"><b>1.2</b> — Time-Series OLS с HAC SE (Newey-West, 3 lags): α и β для каждой акции</div>
+        <div class="sub-badge sub-done">DONE</div>
+      </div>
+      <div class="subtask">
+        <div class="sub-icon">✅</div>
+        <div class="sub-text"><b>1.3</b> — Rolling betas (24-месячное окно) для топ-8 акций</div>
+        <div class="sub-badge sub-done">DONE</div>
+      </div>
+      <div class="subtask">
+        <div class="sub-icon">✅</div>
+        <div class="sub-text"><b>1.4</b> — Security Market Line: теоретическая vs эмпирическая</div>
+        <div class="sub-badge sub-done">DONE</div>
+      </div>
+      <div class="subtask">
+        <div class="sub-icon">✅</div>
+        <div class="sub-text"><b>1.5</b> — Fama-MacBeth two-pass: γ₀ и γ₁ с FM стандартными ошибками</div>
+        <div class="sub-badge sub-done">DONE</div>
+      </div>
+      <div class="subtask">
+        <div class="sub-icon">✅</div>
+        <div class="sub-text"><b>1.6</b> — GRS Test (Gibbons, Ross, Shanken 1989): совместная значимость альф</div>
+        <div class="sub-badge sub-done">DONE</div>
+      </div>
+      <div class="subtask">
+        <div class="sub-icon">✅</div>
+        <div class="sub-text"><b>1.7</b> — Сводный дашборд: беты, альфы, R², SML, FM γ₁ во времени</div>
+        <div class="sub-badge sub-done">DONE</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TASK 2 ── -->
+  <div class="task-card active open">
+    <div class="task-header" onclick="toggle(this)">
+      <div class="task-num">2</div>
+      <div class="task-title">Fama-French 3-Factor Model (SMB + HML)</div>
+      <div class="task-status">В ПРОЦЕССЕ</div>
+      <div class="toggle-arrow">▲</div>
+    </div>
+    <div class="subtasks">
+      <div class="subtask">
+        <div class="sub-icon">✅</div>
+        <div class="sub-text"><b>2.1</b> — Построение факторов SMB и HML: загрузка фундаментальных данных, сортировка 2×3, 6 портфелей</div>
+        <div class="sub-badge sub-done">DONE</div>
+      </div>
+      <div class="subtask">
+        <div class="sub-icon">⟳</div>
+        <div class="sub-text"><b>2.2</b> — Time-Series FF3 регрессия: OLS с HAC SE, нагрузки β, s, h для каждой акции</div>
+        <div class="sub-badge sub-active">IN PROGRESS</div>
+      </div>
+      <div class="subtask">
+        <div class="sub-icon">○</div>
+        <div class="sub-text"><b>2.3</b> — Fama-MacBeth FF3: кросс-секционные регрессии с тремя факторными бетами (γ₀, γ₁, γ₂, γ₃)</div>
+        <div class="sub-badge sub-pending">PENDING</div>
+      </div>
+      <div class="subtask">
+        <div class="sub-icon">○</div>
+        <div class="sub-text"><b>2.4</b> — GRS-тест для FF3: снизились ли альфы по сравнению с CAPM?</div>
+        <div class="sub-badge sub-pending">PENDING</div>
+      </div>
+      <div class="subtask">
+        <div class="sub-icon">○</div>
+        <div class="sub-text"><b>2.5</b> — Сравнительный дашборд CAPM vs FF3: α, R², GRS по обеим моделям</div>
+        <div class="sub-badge sub-pending">PENDING</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TASK 3 ── -->
+  <div class="task-card pending">
+    <div class="task-header" onclick="toggle(this)">
+      <div class="task-num">3</div>
+      <div class="task-title">Momentum Factor — модель Кархарта (WML)</div>
+      <div class="task-status">ОЖИДАЕТ</div>
+      <div class="toggle-arrow">▲</div>
+    </div>
+    <div class="subtasks">
+      <div class="subtask">
+        <div class="sub-icon">○</div>
+        <div class="sub-text"><b>3.1</b> — Построение фактора WML (Winner-Minus-Loser): сортировка по доходности за 12-1 месяцев</div>
+        <div class="sub-badge sub-pending">PENDING</div>
+      </div>
+      <div class="subtask">
+        <div class="sub-icon">○</div>
+        <div class="sub-text"><b>3.2</b> — Time-Series 4-factor OLS: расширение FF3 + momentum</div>
+        <div class="sub-badge sub-pending">PENDING</div>
+      </div>
+      <div class="subtask">
+        <div class="sub-icon">○</div>
+        <div class="sub-text"><b>3.3</b> — Тест: значим ли momentum на российском рынке после санкций?</div>
+        <div class="sub-badge sub-pending">PENDING</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TASK 4 ── -->
+  <div class="task-card pending">
+    <div class="task-header" onclick="toggle(this)">
+      <div class="task-num">4</div>
+      <div class="task-title">Conditional CAPM — бета зависит от состояния рынка</div>
+      <div class="task-status">ОЖИДАЕТ</div>
+      <div class="toggle-arrow">▲</div>
+    </div>
+    <div class="subtasks">
+      <div class="subtask">
+        <div class="sub-icon">○</div>
+        <div class="sub-text"><b>4.1</b> — Определение бычьего / медвежьего рынка: индикатор на основе IMOEX</div>
+        <div class="sub-badge sub-pending">PENDING</div>
+      </div>
+      <div class="subtask">
+        <div class="sub-icon">○</div>
+        <div class="sub-text"><b>4.2</b> — Условные беты: <code>β_bull</code> и <code>β_bear</code> через dummy-переменные в регрессии</div>
+        <div class="sub-badge sub-pending">PENDING</div>
+      </div>
+      <div class="subtask">
+        <div class="sub-icon">○</div>
+        <div class="sub-text"><b>4.3</b> — Тест: β_bull ≠ β_bear? Асимметрия риска на ММВБ</div>
+        <div class="sub-badge sub-pending">PENDING</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TASK 5 ── -->
+  <div class="task-card pending">
+    <div class="task-header" onclick="toggle(this)">
+      <div class="task-num">5</div>
+      <div class="task-title">Robustness — исключение санкционного периода 2022</div>
+      <div class="task-status">ОЖИДАЕТ</div>
+      <div class="toggle-arrow">▲</div>
+    </div>
+    <div class="subtasks">
+      <div class="subtask">
+        <div class="sub-icon">○</div>
+        <div class="sub-text"><b>5.1</b> — Подвыборка до 2022: повторить CAPM и FF3 на периоде 2018-01 — 2022-01</div>
+        <div class="sub-badge sub-pending">PENDING</div>
+      </div>
+      <div class="subtask">
+        <div class="sub-icon">○</div>
+        <div class="sub-text"><b>5.2</b> — Сравнение GRS p-value, средних альф и R² до и после исключения кризиса</div>
+        <div class="sub-badge sub-pending">PENDING</div>
+      </div>
+      <div class="subtask">
+        <div class="sub-icon">○</div>
+        <div class="sub-text"><b>5.3</b> — Вывод: насколько результаты обусловлены структурным разрывом февраля 2022?</div>
+        <div class="sub-badge sub-pending">PENDING</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TASK 6 ── -->
+  <div class="task-card pending">
+    <div class="task-header" onclick="toggle(this)">
+      <div class="task-num">6</div>
+      <div class="task-title">Альтернативные данные — MOEX API (2022–2024)</div>
+      <div class="task-status">ОЖИДАЕТ</div>
+      <div class="toggle-arrow">▲</div>
+    </div>
+    <div class="subtasks">
+      <div class="subtask">
+        <div class="sub-icon">○</div>
+        <div class="sub-text"><b>6.1</b> — Загрузка данных через <code>moexalgo</code>: месячные котировки 2022-07 — 2024-12</div>
+        <div class="sub-badge sub-pending">PENDING</div>
+      </div>
+      <div class="subtask">
+        <div class="sub-icon">○</div>
+        <div class="sub-text"><b>6.2</b> — Объединение с Yahoo Finance данными: полный ряд 2018–2024</div>
+        <div class="sub-badge sub-pending">PENDING</div>
+      </div>
+      <div class="subtask">
+        <div class="sub-icon">○</div>
+        <div class="sub-text"><b>6.3</b> — Повторный запуск всех моделей на расширенной выборке</div>
+        <div class="sub-badge sub-pending">PENDING</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function toggle(header) {
+    const card = header.parentElement;
+    card.classList.toggle('open');
+  }
+</script>
+</body>
+</html>
